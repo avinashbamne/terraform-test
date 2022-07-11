@@ -102,21 +102,51 @@ resource "aws_security_group" "default" {
   description = "Default security group to allow inbound/outbound from the VPC"
   vpc_id      = "${aws_vpc.vpc.id}"
   depends_on  = [aws_vpc.vpc]
+
   ingress {
-    from_port = "22"
-    to_port   = "22"
-    protocol  = "tcp"
-    cider_blocks =[]
-    self      = true
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
   }
-  
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   egress {
-    from_port = "80"
-    to_port   = "80"
-    protocol  = "tcp"
-    cider_blocks =[]
-    self      = "true"
+    from_port   = 0
+    to_port     = 0
+    protocol    = -1
+    cidr_blocks = ["0.0.0.0/0"]
   }
+}
+
+  }
+resource "aws_instance" "web_instance" {
+  ami           = "ami-0533f2ba8a1995cf9"
+  instance_type = "t2.nano"
+  key_name      = "MyKeyPair2"
+
+  subnet_id                   = aws_subnet.some_public_subnet.id
+  vpc_security_group_ids      = [aws_security_group.web_sg.id]
+  associate_public_ip_address = true
+
+  user_data = <<-EOF
+  #!/bin/bash -ex
+
+  amazon-linux-extras install nginx1 -y
+  echo "<h1>$(curl https://api.kanye.rest/?format=text)</h1>" >  /usr/share/nginx/html/index.html 
+  systemctl enable nginx
+  systemctl start nginx
+  EOF
+
+  tags = {
+    "Name" : "Kanye"
+  }
+}
   tags = {
     Environment = "${var.environment}"
   }
