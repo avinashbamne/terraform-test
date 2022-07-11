@@ -130,8 +130,8 @@ resource "aws_instance" "web_instance" {
   instance_type = "t2.nano"
   key_name      = "MyKeyPair2"
 
-  subnet_id                   = aws_subnet.some_public_subnet.id
-  vpc_security_group_ids      = [aws_security_group.web_sg.id]
+  subnet_id     = "${element(aws_subnet.private_subnet.*.id, 0)}"
+   name        = "${var.environment}-default-sg"
   associate_public_ip_address = true
 
   user_data = <<-EOF
